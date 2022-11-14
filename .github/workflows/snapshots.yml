@@ -27,24 +27,24 @@ jobs:
         dotnet-version: '7.0.100'
     
     - run: |
-        ./build.sh ${{ matrix.flag }}
-        mv ./publish-output/amcli* ./publish-output/amcli-${{ matrix.flag }}
+        dotnet build -r ${{ matrix.flag }} -c release -o . -p:Version=$(cat ./VERSION/VERSION)
+        mv ./CLI* ./amcli-${{ matrix.flag }}
 
     - if: ${{ matrix.os == 'windows-latest' }}
       run: |
-        mv ./publish-output/amcli-win-x64 ./publish-output/amcli-win-x64.exe
+        mv ./amcli-win-x64 ./amcli-win-x64.exe
 
     - uses: actions/upload-artifact@v3
       if: ${{ matrix.os == 'windows-latest' }}
       with:
         name: amcli-win-x64
-        path: ./publish-output/amcli.exe
+        path: ./amcli.exe
 
     - uses: actions/upload-artifact@v3
       if: ${{ matrix.os != 'windows-latest' }}
       with:
         name: amcli-${{ matrix.flag }}
-        path: ./publish-output/amcli
+        path: ./amcli
 
   release:
     needs: build
