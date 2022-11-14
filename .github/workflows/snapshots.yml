@@ -27,7 +27,7 @@ jobs:
         dotnet-version: '7.0.100'
     
     - run: |
-        ./build-sh ${{ matrix.flag }}
+        ./build.sh ${{ matrix.flag }}
         mv ./publish-output/amcli* ./publish-output/amcli-${{ matrix.flag }}
 
     - if: ${{ matrix.os == 'windows-latest' }}
