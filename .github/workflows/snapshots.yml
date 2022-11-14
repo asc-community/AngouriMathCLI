@@ -28,7 +28,8 @@ jobs:
     
     - run: |
         dotnet publish -r ${{ matrix.flag }} -c release -o ./publish-output -p:Version=$(cat ./VERSION/VERSION)
-        mv ./publish-output/CLI* ./publish-output/amcli-${{ matrix.flag }}
+        mv ./publish-output/CLI ./publish-output/amcli-${{ matrix.flag }}
+        mv ./publish-output/CLI.exe ./publish-output/amcli-${{ matrix.flag }}
 
     - if: ${{ matrix.os == 'windows-latest' }}
       run: |
@@ -38,13 +39,13 @@ jobs:
       if: ${{ matrix.os == 'windows-latest' }}
       with:
         name: amcli-win-x64
-        path: ./publish-output/amcli.exe
+        path: ./publish-output/amcli-${{ matrix.flag }}.exe
 
     - uses: actions/upload-artifact@v3
       if: ${{ matrix.os != 'windows-latest' }}
       with:
         name: amcli-${{ matrix.flag }}
-        path: ./publish-output/amcli
+        path: ./publish-output/amcli-${{ matrix.flag }}
 
   release:
     needs: build
