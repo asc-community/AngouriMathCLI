@@ -28,12 +28,14 @@ jobs:
     
     - run: |
         dotnet publish -r ${{ matrix.flag }} -c release -o ./publish-output -p:Version=$(cat ./VERSION/VERSION)
-        mv ./publish-output/CLI ./publish-output/amcli-${{ matrix.flag }} || \
-        mv ./publish-output/CLI.exe ./publish-output/amcli-${{ matrix.flag }}.exe
+
+    - if: ${{ matrix.os != 'windows-latest' }}
+      run: |
+        mv ./publish-output/CLI ./publish-output/amcli-${{ matrix.flag }} 
 
     - if: ${{ matrix.os == 'windows-latest' }}
       run: |
-        mv ./publish-output/amcli-win-x64 ./publish-output/amcli-win-x64.exe
+        mv ./publish-output/CLI.exe ./publish-output/amcli-win-x64.exe
 
     - uses: actions/upload-artifact@v3
       if: ${{ matrix.os == 'windows-latest' }}
