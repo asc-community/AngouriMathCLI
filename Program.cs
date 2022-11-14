@@ -20,6 +20,7 @@ using AngouriMath.Extensions;
 var cliArgs = System.Environment.GetCommandLineArgs();
 var reader = new ArgReader(cliArgs);
 
+
 Entity expr;
 Entity.Variable v;
 string res;
@@ -218,7 +219,6 @@ switch (cmd)
         Console.WriteLine($"Unrecognized command `{cmd}`");
         break;
 }
-
 
 public sealed class ArgReader
 {
