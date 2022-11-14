@@ -27,24 +27,24 @@ jobs:
         dotnet-version: '7.0.100'
     
     - run: |
-        dotnet publish -r ${{ matrix.flag }} -c release -o . -p:Version=$(cat ./VERSION/VERSION)
-        mv ./CLI* ./amcli-${{ matrix.flag }}
+        dotnet publish -r ${{ matrix.flag }} -c release -o ./publish-output -p:Version=$(cat ./VERSION/VERSION)
+        mv ./publish-output/amcli* ./publish-output/amcli-${{ matrix.flag }}
 
     - if: ${{ matrix.os == 'windows-latest' }}
       run: |
-        mv ./amcli-win-x64 ./amcli-win-x64.exe
+        mv ./publish-output/amcli-win-x64 ./publish-output/amcli-win-x64.exe
 
     - uses: actions/upload-artifact@v3
       if: ${{ matrix.os == 'windows-latest' }}
       with:
         name: amcli-win-x64
-        path: ./amcli.exe
+        path: ./publish-output/amcli.exe
 
     - uses: actions/upload-artifact@v3
       if: ${{ matrix.os != 'windows-latest' }}
       with:
         name: amcli-${{ matrix.flag }}
-        path: ./amcli
+        path: ./publish-output/amcli
 
   release:
     needs: build
@@ -66,9 +66,9 @@ jobs:
         echo ${{ secrets.CLI_ACCESS_TOKEN }} > token.txt
         gh auth login --with-token < token.txt
         gh release create v$version \
-        amcli-win-x64.exe \
-        amcli-linux-x64 \
-        amcli-osx-x64 \
+        ./publish-output/amcli-win-x64.exe \
+        ./publish-output/amcli-linux-x64 \
+        ./publish-output/amcli-osx-x64 \
         -R asc-community/AngouriMathCLI \
         -t 'AngouriMath CLI' \
         -n 'Expant assets and find the binary for you'
