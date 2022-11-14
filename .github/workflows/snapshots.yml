@@ -70,9 +70,9 @@ jobs:
         echo ${{ secrets.CLI_ACCESS_TOKEN }} > token.txt
         gh auth login --with-token < token.txt
         gh release create v$version \
-        ./publish-output/amcli-win-x64.exe \
-        ./publish-output/amcli-linux-x64 \
-        ./publish-output/amcli-osx-x64 \
+        ./amcli-win-x64.exe \
+        ./amcli-linux-x64 \
+        ./amcli-osx-x64 \
         -R asc-community/AngouriMathCLI \
         -t 'AngouriMath CLI' \
         -n 'Expant assets and find the binary for you'
