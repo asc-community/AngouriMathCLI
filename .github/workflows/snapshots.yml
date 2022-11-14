@@ -47,6 +47,7 @@ jobs:
         path: ./publish-output/amcli
 
   release:
+    needs: build
     runs-on: ubuntu-latest
 
     steps:
