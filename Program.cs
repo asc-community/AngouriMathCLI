@@ -1,4 +1,20 @@
-﻿using AngouriMath;
+﻿//  amcli - command line interface for CAS AngouriMath
+//  Copyright (C) 2022 Angouri
+//
+//  This program is free software: you can redistribute it and/or modify
+//  it under the terms of the GNU General Public License as published by
+//  the Free Software Foundation, either version 3 of the License, or
+//  (at your option) any later version.
+//
+//  This program is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU General Public License for more details.
+//
+//  You should have received a copy of the GNU General Public License
+//  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+using AngouriMath;
 using AngouriMath.Extensions;
 
 var cliArgs = System.Environment.GetCommandLineArgs();
@@ -13,16 +29,17 @@ switch (cmd)
 {
     case "help" or "-h" or "--help":
         Console.WriteLine("""
-                .d8b.    .88b  d88.    .o88b.   db        d888888b 
-               d8' `8b   88'YbdP`88   d8P  Y8   88          `88'   
-               88ooo88   88  88  88   8P        88           88    
-               88~~~88   88  88  88   8b        88           88    
-               88   88   88  88  88   Y8b  d8   88booo.     .88.   
-               YP   YP   YP  YP  YP    `Y88P'   Y88888P   Y888888P 
+
+                  .d8b.    .88b  d88.    .o88b.   db        d888888b 
+                 d8' `8b   88'YbdP`88   d8P  Y8   88          `88'   
+                 88ooo88   88  88  88   8P        88           88    
+                 88~~~88   88  88  88   8b        88           88    
+                 88   88   88  88  88   Y8b  d8   88booo.     .88.   
+                 YP   YP   YP  YP  YP    `Y88P'   Y88888P   Y888888P 
                                             
-        amcli (c) 2019-2022 Angouri
+        amcli (c) 2022 Angouri
         This is free software. You're free to use, modify and redistribute it.
-        MIT (Expat) license. Made with AngouriMath (MIT) and .NET (MIT).
+        GNU GPL v3 license. Made with AngouriMath (MIT Expat) and .NET (MIT Expat).
 
         Why use it?
         - Free and cross-platform
@@ -30,42 +47,6 @@ switch (cmd)
         - Piping for complex operations
         - Fast and small
         
-        PIPING
-        
-            Any argument can be received either as a CLI argument or through
-            standard input. For example,
-
-                amcli eval "1 + 1"
-            
-            is equivalent to
-
-                echo "1 + 1" | amcli eval
-
-            This allows to pipe complex evaluations:
-
-                echo "sin(x) * cos(y)" \     # 0. initial expression
-                | amcli diff x \             # 1. differentiate over x
-                | amcli sub x y \            # 2. substitute y instead of x
-                | amcli diff y \             # 3. differentiate over y
-                | amcli sub y "pi/3" \       # 4. substitute pi/3 instead of y
-                | amcli simplify             # 5. simplify
-
-            Prints
-
-                -1/2 * sqrt(3)
-
-            Special symbol "_" (underscore) can be used to use stdinput instead
-            of an argument. For instance, if you want to substitute the result of
-            an operation into another expression:
-            
-                echo "e^x" \
-                | amcli sub u _ "u / (1 + u)" \
-                | amcli sub x 10 \
-                | amcli eval
-
-            Here the result of `echo` is substituted instead of the second argument
-            of `amcli sub`, not the last one.
-
         COMMANDS
 
             EVAL
@@ -138,6 +119,42 @@ switch (cmd)
                 sin(pi / 3)
                 $ amcli sub x "pi / 3" "sin(x)"
                 sin(pi / 3)
+
+        PIPING
+        
+            Any argument can be received either as a CLI argument or through
+            standard input. For example,
+
+                amcli eval "1 + 1"
+            
+            is equivalent to
+
+                echo "1 + 1" | amcli eval
+
+            This allows to pipe complex evaluations:
+
+                echo "sin(x) * cos(y)" \     # 0. initial expression
+                | amcli diff x \             # 1. differentiate over x
+                | amcli sub x y \            # 2. substitute y instead of x
+                | amcli diff y \             # 3. differentiate over y
+                | amcli sub y "pi/3" \       # 4. substitute pi/3 instead of y
+                | amcli simplify             # 5. simplify
+
+            Prints
+
+                -1/2 * sqrt(3)
+
+            Special symbol "_" (underscore) can be used to use stdinput instead
+            of an argument. For instance, if you want to substitute the result of
+            an operation into another expression:
+            
+                echo "e^x" \
+                | amcli sub u _ "u / (1 + u)" \
+                | amcli sub x 10 \
+                | amcli eval
+
+            Here the result of `echo` is substituted instead of the second argument
+            of `amcli sub`, not the last one.
 
         OTHER
             
