@@ -28,8 +28,8 @@ jobs:
     
     - run: |
         dotnet publish -r ${{ matrix.flag }} -c release -o ./publish-output -p:Version=$(cat ./VERSION/VERSION)
-        mv ./publish-output/CLI ./publish-output/amcli-${{ matrix.flag }}
-        mv ./publish-output/CLI.exe ./publish-output/amcli-${{ matrix.flag }}
+        mv ./publish-output/CLI ./publish-output/amcli-${{ matrix.flag }} || \
+        mv ./publish-output/CLI.exe ./publish-output/amcli-${{ matrix.flag }}.exe
 
     - if: ${{ matrix.os == 'windows-latest' }}
       run: |
