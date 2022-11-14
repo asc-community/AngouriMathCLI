@@ -7,8 +7,7 @@ fi
 rm -r bin
 rm -r obj
 
-# dotnet publish \
-../../../../../programs/dotnet-folder/dotnet publish \
+dotnet publish \
 -r $1 \
 -c release \
 -o ./publish-output \
