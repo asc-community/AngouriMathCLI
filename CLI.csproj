@@ -5,6 +5,7 @@
     <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+
     <SelfContained>true</SelfContained>
     <PublishAot>true</PublishAot>
     <PublishTrimmed>true</PublishTrimmed>
@@ -18,7 +19,6 @@
   <ItemGroup>
     <PackageReference Include="AngouriMath" Version="10.0.0-master-1664389750-0b77b8d" />
     <Compile Remove="**/publishing/**" />
-    <!--<PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />-->
   </ItemGroup>
 
 </Project>

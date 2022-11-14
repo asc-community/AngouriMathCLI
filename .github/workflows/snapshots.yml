@@ -27,7 +27,7 @@ jobs:
         dotnet-version: '7.0.100'
     
     - run: |
-        dotnet build -r ${{ matrix.flag }} -c release -o . -p:Version=$(cat ./VERSION/VERSION)
+        dotnet publish -r ${{ matrix.flag }} -c release -o . -p:Version=$(cat ./VERSION/VERSION)
         mv ./CLI* ./amcli-${{ matrix.flag }}
 
     - if: ${{ matrix.os == 'windows-latest' }}
