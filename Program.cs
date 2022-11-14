@@ -55,9 +55,9 @@ switch (cmd)
             for complex numbers. Expects one argument.
 
             Example:
-                $ amcli "1 / 2"
+                $ amcli eval "1 / 2"
                 0.5
-                $ amcli "e ^ pi > pi ^ e"
+                $ amcli eval "e ^ pi > pi ^ e"
                 true
 
             DIFF
