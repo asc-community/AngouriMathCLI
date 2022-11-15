@@ -16,6 +16,8 @@
 
 using AngouriMath;
 using AngouriMath.Extensions;
+using HonkSharp;
+using HonkSharp.Functional;
 
 var cliArgs = System.Environment.GetCommandLineArgs();
 var reader = new ArgReader(cliArgs);
@@ -74,12 +76,23 @@ switch (cmd)
                 $ echo "1 + x^2" | amcli diff "x"
                 2 * x
 
-            SIMPLIFY
+            SIMP
 
-            amcli simplify - to simplify the expression. Expects one argument.
+            amcli simp - to simplify the expression. Expects one argument.
 
             Example:
-                $ amcli simplify "sin(x)^2 + cos(x)^2"
+                $ amcli simp "sin(x)^2 + cos(x)^2"
+                1
+
+            FSIMP
+
+            amcli fsimp - to simplify the expression "faster". This one works
+            closer to eval than to simp, but unlike eval, it won't try to
+            collapse to a single number or boolean (e. g. sqrt(3) will stay as
+            it is). Expects one argument. 
+
+            Example:
+                $ amcli fsimp "sin(x)^2 + cos(x)^2"
                 1
 
             SOLVE
@@ -198,7 +211,7 @@ switch (cmd)
         Console.WriteLine(expr.Latexise());
         break;
 
-    case "simplify":
+    case "simp":
         expr = reader.Next().ToEntity();
         Console.WriteLine(expr.Simplify());
         break;
