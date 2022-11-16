@@ -18,11 +18,13 @@ using AngouriMath;
 using AngouriMath.Extensions;
 using HonkSharp;
 using HonkSharp.Functional;
+using PeterO.Numbers;
 
 var cliArgs = System.Environment.GetCommandLineArgs();
 var reader = new ArgReader(cliArgs);
 
-
+var prec = GetEnv<int>("AMCLI_PRECISION", 100);
+MathS.Settings.DecimalPrecisionContext.Set(new EContext(prec, ERounding.HalfUp, -prec, 10 * prec, false));
 Entity expr;
 Entity.Variable v;
 string res;
@@ -170,6 +172,13 @@ switch (cmd)
             Here the result of `echo` is substituted instead of the second argument
             of `amcli sub`, not the last one.
 
+        SETTINGS
+            
+            All settings are set using environment variables.
+
+            AMCLI_PRECISION - precision/number of digits in decimal numbers.
+            Default - 100.
+
         OTHER
             
             You can bind amcli to @ using aliases. On Unix-like operating systems,
@@ -228,9 +237,80 @@ switch (cmd)
         Console.WriteLine(expr.Substitute(v, withWhat));
         break;
 
+    case "info":
+        expr = reader.Next();
+        var splitter = new string('-', 20);
+        Console.WriteLine($"expr: {expr}");
+        Console.WriteLine(splitter);
+        Console.WriteLine($"vars: {expr.Vars.ToLList()}");
+        Console.WriteLine(splitter);
+        var vars = expr.Vars.ToArray();
+        foreach (var vx in vars)
+        {
+            Console.Write($"diff over {vx}: ");
+            Console.WriteLine(expr.Differentiate(vx).InnerSimplified);
+            Console.WriteLine(splitter);
+        }
+        foreach (var vx in vars)
+        {
+            Console.Write($"roots over {vx}: ");
+            Console.WriteLine(expr.Solve(vx).InnerSimplified);
+            Console.WriteLine(splitter);
+        }
+
+        var diffs = new List<Entity>();
+        foreach (var vx in vars)
+            diffs.add(expr.Differentiate(vx).InnerSimplified);
+
+        var system = MathS.Equations(diff);
+        var sols = system.Solve(expr.Vars);
+        if (sols is null)
+        {
+            Console.WriteLine("amcli wasn't able to find any extremas");
+            break;
+        }
+
+        var diffMatrix = new Entity.Matrix(dims => 
+            expr
+            .Differentiate(vars[dims[0]])
+            .Differentiate(vars[dims[1]])
+            .InnerSimplified,
+            vars.Length,
+            vars.Length);
+
+        foreach (var (i, sol) in sols.Enumerate())
+        {
+            var exprToSub = expr;
+            var diffMatToSub = diffMatrix;
+            foreach (var (vr, val) in sol.Zip(vars))
+            {
+                exprToSub = exprToSub.Substitute(vr, val);
+                diffMatToSub = diffMatToSub.Substitute(vr, val);
+            }
+            var fValue = exprToSub.Evaled;
+            var det = diffMatToSub.Evaled.Determinant.EvalNumerical();
+            Console.WriteLine($"Extrema #{i}:");
+            Console.WriteLine($"Point: {sol}");
+            Console.WriteLine($"Value: {fValue}");
+            Console.WriteLine($"Hessian det: {det}");
+        }
+
+        break;
+
     default:
         Console.WriteLine($"Unrecognized command `{cmd}`");
         break;
+}
+
+static T GetEnv<T>(string name, T def)
+{
+    if (Environment.GetEnvironmentVariable(name) is not string value)
+        return def;
+    if (typeof(T) == typeof(int))
+        return (T)(object)int.Parse(value);
+    if (typeof(T) == typeof(string))
+        return (T)(object)value;
+    throw new();
 }
 
 public sealed class ArgReader
@@ -252,3 +332,4 @@ public sealed class ArgReader
         return Console.ReadLine()!;
     }
 }
+
