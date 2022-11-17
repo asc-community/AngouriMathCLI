@@ -16,8 +16,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AngouriMath" Version="10.0.0-master-1664389750-0b77b8d" />
     <Compile Remove="**/publishing/**" />
+    <Compile Remove="AngouriMath/**" />
+    <ProjectReference Include="./AngouriMath/Sources/AngouriMath/AngouriMath/AngouriMath.csproj" />
   </ItemGroup>
 
 </Project>

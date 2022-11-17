@@ -22,9 +22,8 @@ using PeterO.Numbers;
 
 var cliArgs = System.Environment.GetCommandLineArgs();
 IArgReader reader = new ArgReader(cliArgs);
-// IArgReader reader = new ArgReader(new [] { "", "info", "x2 + 4y2 + y4 + x + (z - 3)^2 - 1" });
-
-var prec = GetEnv<int>("AMCLI_PRECISION", 100);
+// IArgReader reader = new ArgReader(new [] { "", "info", "-66 x_1 2 - 6 x_1 x_2 + 24 x_1 x_3 - 12 x_1 x_4 + 270 x_1 - 74 x_2 2 - 8 x_2 x_3 + 4 x_2 x_4 - 440 x_2 - 59 x_3 2 - 16 x_3 x_4 - 190 x_3 - 71 x_4 2 + 20 x_4" });
+var prec = GetEnv<int>("AMCLI_PRECISION", 20);
 MathS.Settings.DecimalPrecisionContext.Set(new EContext(prec, ERounding.HalfUp, -prec, 10 * prec, false));
 Entity expr;
 Entity.Variable v;
@@ -292,6 +291,8 @@ switch (cmd)
                 diffs.Add(expr.Differentiate(vx).InnerSimplified);
 
             var system = MathS.Equations((IEnumerable<Entity>)diffs);
+            Console.WriteLine("First order condition:");
+            Console.WriteLine(system);
             var sols2 = system.Solve(vars);
             if (sols2 is null)
             {
@@ -329,18 +330,23 @@ switch (cmd)
                 var uniqueVar = MathS.Var("lambda_quackfrog");
                 var eigenMatrix = (Entity.Matrix)(hessianToSub - MathS.IdentityMatrix(hessian.RowCount) * uniqueVar).InnerSimplified;
                 var eigenDet = eigenMatrix.Determinant!;
-                var eigenValues = eigenDet.Equalizes(0).Solve(uniqueVar).Evaled;
+                var eigenValues = eigenDet.InnerSimplified.Equalizes(0).Solve(uniqueVar).Evaled;
                 if (eigenValues is Entity.Set.FiniteSet eigens)
                 {
-                    Console.WriteLine($"Eigen values of hessian: {eigens}");
-                    if (eigens.All(val => val.EvalNumerical() is Entity.Number.Real r1 && r1.IsPositive))
-                        Console.WriteLine("Type of extremum: Minimum");
-                    else if (eigens.All(val => val.EvalNumerical() is Entity.Number.Real r2 && r2.IsNegative))
-                        Console.WriteLine("Type of extremum: Negative");
-                    else if (eigens.All(val => val.EvalNumerical() is Entity.Number.Real r3 && r3.IsNegative || val.EvalNumerical() is Entity.Number.Real r4 && r4.IsPositive))
-                        Console.WriteLine("Type of extremum: Saddle");
+                    if (eigens.Count is 0)
+                        Console.WriteLine("amcli wasn't able to find eigen values and the type of extremum");
                     else
-                        Console.WriteLine("Cannot detect type of extremum");
+                    {
+                        Console.WriteLine($"Eigen values of hessian: {eigens}");
+                        if (eigens.All(val => val.EvalNumerical() is Entity.Number.Real r1 && r1.IsPositive))
+                            Console.WriteLine("Type of extremum: Minimum");
+                        else if (eigens.All(val => val.EvalNumerical() is Entity.Number.Real r2 && r2.IsNegative))
+                            Console.WriteLine("Type of extremum: Negative");
+                        else if (eigens.All(val => val.EvalNumerical() is Entity.Number.Real r3 && r3.IsNegative || val.EvalNumerical() is Entity.Number.Real r4 && r4.IsPositive))
+                            Console.WriteLine("Type of extremum: Saddle");
+                        else
+                            Console.WriteLine("Cannot detect type of extremum");
+                    }
                 }
                 Console.WriteLine();
                 Console.WriteLine();
