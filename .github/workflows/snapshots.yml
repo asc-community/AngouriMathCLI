@@ -36,7 +36,14 @@ jobs:
       with:
         dotnet-version: '7.0.100'
 
-    - run: |
+    - name: 'Install packages'
+      run: |
+        dotnet nuget add source https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet8/nuget/v3/index.json
+        dotnet add package Microsoft.DotNet.ILCompiler --prerelease
+        dotnet add package runtime.linux-x64.Microsoft.DotNet.ILCompiler --prerelease
+
+    - name: 'Build'
+      run: |
         sudo apt install binutils-aarch64-linux-gnu -y
         dotnet publish -r linux-x64 -c release -o ./publish-output-x64 -p:Version=$(cat ./VERSION/VERSION)
         dotnet publish -r linux-arm64 -c release -o ./publish-output-arm64 -p:Version=$(cat ./VERSION/VERSION)
