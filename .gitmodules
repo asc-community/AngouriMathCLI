@@ -1,0 +1,3 @@
+[submodule "AngouriMath"]
+	path = AngouriMath
+	url = git@github.com:asc-community/AngouriMath.git

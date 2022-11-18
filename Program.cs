@@ -16,13 +16,15 @@
 
 using AngouriMath;
 using AngouriMath.Extensions;
-using HonkSharp;
 using HonkSharp.Functional;
+using HonkSharp.Fluency;
+using PeterO.Numbers;
 
 var cliArgs = System.Environment.GetCommandLineArgs();
-var reader = new ArgReader(cliArgs);
-
-
+IArgReader reader = new ArgReader(cliArgs);
+// IArgReader reader = new ArgReader(new [] { "", "info", "-66 x_1 2 - 6 x_1 x_2 + 24 x_1 x_3 - 12 x_1 x_4 + 270 x_1 - 74 x_2 2 - 8 x_2 x_3 + 4 x_2 x_4 - 440 x_2 - 59 x_3 2 - 16 x_3 x_4 - 190 x_3 - 71 x_4 2 + 20 x_4" });
+var prec = GetEnv<int>("AMCLI_PRECISION", 20);
+MathS.Settings.DecimalPrecisionContext.Set(new EContext(prec, ERounding.HalfUp, -prec, 10 * prec, false));
 Entity expr;
 Entity.Variable v;
 string res;
@@ -170,6 +172,13 @@ switch (cmd)
             Here the result of `echo` is substituted instead of the second argument
             of `amcli sub`, not the last one.
 
+        SETTINGS
+            
+            All settings are set using environment variables.
+
+            AMCLI_PRECISION - precision/number of digits in decimal numbers.
+            Default - 100.
+
         OTHER
             
             You can bind amcli to @ using aliases. On Unix-like operating systems,
@@ -228,12 +237,141 @@ switch (cmd)
         Console.WriteLine(expr.Substitute(v, withWhat));
         break;
 
+    case "info":
+        expr = reader.Next();
+        var splitter = new string('-', 20);
+        Console.WriteLine($"expr: {expr}");
+        Console.WriteLine(splitter);
+        Console.WriteLine($"vars: {expr.Vars.ToLList()}");
+        Console.WriteLine(splitter);
+        var vars = expr.Vars.ToArray();
+        foreach (var vx in vars)
+        {
+            Console.Write($"diff over {vx}: ");
+            Console.WriteLine(expr.Differentiate(vx).InnerSimplified);
+            Console.WriteLine(splitter);
+        }
+        foreach (var vx in vars)
+        {
+            Console.Write($"roots over {vx}: ");
+            Console.WriteLine(expr.Equalizes(0).Solve(vx).InnerSimplified);
+            Console.WriteLine(splitter);
+        }
+        if (vars.Length is 1)
+        {
+            var fx = expr.Differentiate(vars[0]);
+            var crit = fx.Equalizes(0).Solve(vars[0]);
+            if (crit is not Entity.Set.FiniteSet fins)
+                goto notOneVar;
+            var fxx = fx.Differentiate(vars[0]);
+            foreach (var (i, sol) in fins.Enumerate())
+            {
+                Console.WriteLine($"Extremum #{i}");
+                Console.WriteLine($"Point: {sol}");
+                Console.WriteLine($"Value: {expr.Substitute(vars[0], sol).Evaled}");
+                var fxxValue = fxx.Substitute(vars[0], sol).EvalNumerical();
+                Console.WriteLine($"2nd derivative value: {fxxValue}");
+                Console.Write("Type of extremum: ");
+                if (fxxValue is not Entity.Number.Real rVal)
+                    continue;
+                if (rVal == 0)
+                    Console.WriteLine("Saddle");
+                if ((double)rVal > 0.0)
+                    Console.WriteLine("Minimum");
+                if ((double)rVal < 0.0)
+                    Console.WriteLine("Maximum");
+                Console.WriteLine();
+            }
+        }
+        notOneVar:
+        if (vars.Length is > 1)
+        {
+            var diffs = new List<Entity>();
+            foreach (var vx in vars)
+                diffs.Add(expr.Differentiate(vx).InnerSimplified);
+
+            var system = MathS.Equations((IEnumerable<Entity>)diffs);
+            Console.WriteLine("First order condition:");
+            Console.WriteLine(system);
+            var sols2 = system.Solve(vars);
+            if (sols2 is null)
+            {
+                Console.WriteLine("amcli wasn't able to find any extremas");
+                break;
+            }
+
+            var hessian = new Entity.Matrix(dims => 
+                expr
+                .Differentiate(vars[dims[0]])
+                .Differentiate(vars[dims[1]])
+                .InnerSimplified,
+                vars.Length,
+                vars.Length);
+
+            foreach (var (i, sol) in sols2.Enumerate())
+            {
+                var exprToSub = expr;
+                Entity hessianToSub = hessian;
+                var msol = ((Entity.Matrix)sol).T;
+                foreach (var (val, vr) in msol.Zip(vars))
+                {
+                    exprToSub = exprToSub.Substitute(vr, val);
+                    hessianToSub = hessianToSub.Substitute(vr, val);
+                }
+                var fValue = exprToSub.Evaled;
+                var hessienEvaled = (Entity.Matrix)hessianToSub.Evaled;
+                var det = hessienEvaled.Determinant!.EvalNumerical();
+                Console.WriteLine($"Extrema #{i}:");
+                Console.WriteLine($"Point: {msol.T}");
+                Console.WriteLine($"Value: {fValue}");
+                Console.WriteLine($"Hessien:");
+                Console.WriteLine(hessienEvaled.ToString(multilineFormat: true));
+
+                var uniqueVar = MathS.Var("lambda_quackfrog");
+                var eigenMatrix = (Entity.Matrix)(hessianToSub - MathS.IdentityMatrix(hessian.RowCount) * uniqueVar).InnerSimplified;
+                var eigenDet = eigenMatrix.Determinant!;
+                var eigenValues = eigenDet.InnerSimplified.Equalizes(0).Solve(uniqueVar).Evaled;
+                if (eigenValues is Entity.Set.FiniteSet eigens)
+                {
+                    if (eigens.Count is 0)
+                        Console.WriteLine("amcli wasn't able to find eigen values and the type of extremum");
+                    else
+                    {
+                        Console.WriteLine($"Eigen values of hessian: {eigens}");
+                        if (eigens.All(val => val.EvalNumerical() is Entity.Number.Real r1 && r1.IsPositive))
+                            Console.WriteLine("Type of extremum: Minimum");
+                        else if (eigens.All(val => val.EvalNumerical() is Entity.Number.Real r2 && r2.IsNegative))
+                            Console.WriteLine("Type of extremum: Negative");
+                        else if (eigens.All(val => val.EvalNumerical() is Entity.Number.Real r3 && r3.IsNegative || val.EvalNumerical() is Entity.Number.Real r4 && r4.IsPositive))
+                            Console.WriteLine("Type of extremum: Saddle");
+                        else
+                            Console.WriteLine("Cannot detect type of extremum");
+                    }
+                }
+                Console.WriteLine();
+                Console.WriteLine();
+            }
+        }
+
+        break;
+
     default:
         Console.WriteLine($"Unrecognized command `{cmd}`");
         break;
 }
 
-public sealed class ArgReader
+static T GetEnv<T>(string name, T def)
+{
+    if (Environment.GetEnvironmentVariable(name) is not string value)
+        return def;
+    if (typeof(T) == typeof(int))
+        return (T)(object)int.Parse(value);
+    if (typeof(T) == typeof(string))
+        return (T)(object)value;
+    throw new();
+}
+
+public sealed class ArgReader : IArgReader
 {
     private readonly string[] args;
     private int curr = 1;
@@ -251,4 +389,9 @@ public sealed class ArgReader
         }
         return Console.ReadLine()!;
     }
+}
+
+public interface IArgReader 
+{
+    public string Next();
 }
