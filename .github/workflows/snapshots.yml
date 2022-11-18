@@ -38,8 +38,8 @@ jobs:
 
     - run: |
         sudo apt install binutils-aarch64-linux-gnu -y
-        dotnet publish -r ${{ matrix.flag }}-x64 -c release -o ./publish-output-x64 -p:Version=$(cat ./VERSION/VERSION)
-        dotnet publish -r ${{ matrix.flag }}-arm64 -c release -o ./publish-output-arm64 -p:Version=$(cat ./VERSION/VERSION)
+        dotnet publish -r linux-x64 -c release -o ./publish-output-x64 -p:Version=$(cat ./VERSION/VERSION)
+        dotnet publish -r linux-arm64 -c release -o ./publish-output-arm64 -p:Version=$(cat ./VERSION/VERSION)
         mkdir publish-output
         mv ./publish-output-x64/CLI ./publish-output/amcli-linux-x64 
         mv ./publish-output-arm64/CLI ./publish-output/amcli-linux-arm64 
@@ -68,8 +68,8 @@ jobs:
         dotnet publish -r win-x64 -c release -o ./publish-output-x64 -p:Version=$(cat ./VERSION/VERSION)
         dotnet publish -r win-arm64 -c release -o ./publish-output-arm64 -p:Version=$(cat ./VERSION/VERSION)
         mkdir publish-output
-        mv ./publish-output-x64/CLI-x64.exe ./publish-output/amcli-win-x64.exe
-        mv ./publish-output-arm64/CLI-arm64.exe ./publish-output/amcli-win-x64.exe
+        mv ./publish-output-x64/CLI.exe ./publish-output/amcli-win-x64.exe
+        mv ./publish-output-arm64/CLI.exe ./publish-output/amcli-win-arm64.exe
 
     - uses: actions/upload-artifact@v3
       with:
