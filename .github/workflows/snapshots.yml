@@ -8,18 +8,8 @@ on:
 #      - 'VERSION/**'
 
 jobs:
-  build:
-    strategy:
-      matrix:
-        include:
-          - os: windows-latest
-            flag: win
-          - os: ubuntu-latest
-            flag: linux
-          - os: macos-latest
-            flag: osx
-
-    runs-on: ${{ matrix.os }}
+  build-osx:
+    runs-on: macos-latest
 
     steps:
     - uses: actions/checkout@v2
@@ -27,52 +17,73 @@ jobs:
     - uses: actions/setup-dotnet@v1
       with:
         dotnet-version: '7.0.100'
-    
-    - if: ${{ matrix.os == 'ubuntu-latest' }}
-      run: |
-        sudo apt install binutils-aarch64-linux-gnu -y
+    - run: |
+        dotnet publish -r osx-x64 -c release -o ./publish-output -p:Version=$(cat ./VERSION/VERSION)
+        mv ./publish-output/CLI ./publish-output/amcli-osx-x64
+
+    - uses: actions/upload-artifact@v3
+      with:
+        name: amcli-osx-x64
+        path: ./publish-output/amcli-osx-x64
+
+  build-linux:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '7.0.100'
 
     - run: |
+        sudo apt install binutils-aarch64-linux-gnu -y
         dotnet publish -r ${{ matrix.flag }}-x64 -c release -o ./publish-output-x64 -p:Version=$(cat ./VERSION/VERSION)
         dotnet publish -r ${{ matrix.flag }}-arm64 -c release -o ./publish-output-arm64 -p:Version=$(cat ./VERSION/VERSION)
         mkdir publish-output
+        mv ./publish-output-x64/CLI ./publish-output/amcli-linux-x64 
+        mv ./publish-output-arm64/CLI ./publish-output/amcli-linux-arm64 
 
-    - if: ${{ matrix.os != 'windows-latest' }}
-      run: |
-        mv ./publish-output-x64/CLI ./publish-output/amcli-${{ matrix.flag }}-x64 
-        mv ./publish-output-arm64/CLI ./publish-output/amcli-${{ matrix.flag }}-arm64 
+    - uses: actions/upload-artifact@v3
+      with:
+        name: amcli-linux-x64
+        path: ./publish-output/amcli-linux-x64
 
-    - if: ${{ matrix.os == 'windows-latest' }}
-      run: |
+    - uses: actions/upload-artifact@v3
+      with:
+        name: amcli-linux-arm64
+        path: ./publish-output/amcli-linux-arm64
+
+  build-win:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '7.0.100'
+ 
+    - run: |
+        dotnet publish -r win-x64 -c release -o ./publish-output-x64 -p:Version=$(cat ./VERSION/VERSION)
+        dotnet publish -r win-arm64 -c release -o ./publish-output-arm64 -p:Version=$(cat ./VERSION/VERSION)
+        mkdir publish-output
         mv ./publish-output-x64/CLI-x64.exe ./publish-output/amcli-win-x64.exe
         mv ./publish-output-arm64/CLI-arm64.exe ./publish-output/amcli-win-x64.exe
 
     - uses: actions/upload-artifact@v3
-      if: ${{ matrix.os == 'windows-latest' }}
       with:
         name: amcli-win-x64
-        path: ./publish-output/amcli-${{ matrix.flag }}-x64.exe
+        path: ./publish-output/amcli-win-x64.exe
 
     - uses: actions/upload-artifact@v3
-      if: ${{ matrix.os == 'windows-latest' }}
       with:
         name: amcli-win-arm64
-        path: ./publish-output/amcli-${{ matrix.flag }}-arm64.exe
+        path: ./publish-output/amcli-win-arm64.exe
 
-    - uses: actions/upload-artifact@v3
-      if: ${{ matrix.os != 'windows-latest' }}
-      with:
-        name: amcli-${{ matrix.flag }}-x64
-        path: ./publish-output/amcli-${{ matrix.flag }}-x64
-
-    - uses: actions/upload-artifact@v3
-      if: ${{ matrix.os != 'windows-latest' }}
-      with:
-        name: amcli-${{ matrix.flag }}-arm64
-        path: ./publish-output/amcli-${{ matrix.flag }}-arm64
 
 #  release:
-#    needs: build
+#    needs: build-osx, build-win, build-linux
 #    runs-on: ubuntu-latest
 #
 #    steps:
