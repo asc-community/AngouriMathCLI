@@ -30,7 +30,7 @@ jobs:
     
     - if: ${{ matrix.os == 'ubuntu-latest' }}
       run: |
-        apt install binutils-aarch64-linux-gnu -y
+        sudo apt install binutils-aarch64-linux-gnu -y
 
     - run: |
         dotnet publish -r ${{ matrix.flag }}-x64 -c release -o ./publish-output-x64 -p:Version=$(cat ./VERSION/VERSION)
