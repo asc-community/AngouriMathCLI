@@ -4,32 +4,48 @@
   outputs = { nixpkgs, my-nix, ... }: 
   let 
     systems = [
-      { arch-nix = "x86_64-linux"; arch-dn =   "linux-x64"; }
-      { arch-nix = "aarch64-linux"; arch-dn =  "linux-arm64"; }
-      { arch-nix = "x86_64-darwin"; arch-dn =  "darwin-x64";    }
-      { arch-nix = "aarch64-darwin"; arch-dn = "darwin-arm64"; }
+      "x86_64-linux"
+      "aarch64-linux"
+      "x86_64-darwin"
+      "aarch64-darwin"
     ]; in
   {
     devShells = nixpkgs.lib.genAttrs systems (arch: {
       default = my-nix.dotnetShell 
-        nixpkgs.legacyPackages.${arch.arch-nix}
+        nixpkgs.legacyPackages.${arch}
           (p: [ p.sdk_7_0 ])
           (p: [ ])
           ;
     });
 
-    packages = nixpkgs.lib.genAttrs systems (arch: with nixpkgs.legacyPackages.${arch.arch-nix}; {
+    packages = nixpkgs.lib.genAttrs systems (arch: with nixpkgs.legacyPackages.${arch}; {
       default = 
-        buildDotnetPackage {
+        stdenv.mkDerivation {
           pname = "amcli";
-          version = builtins.readFile "./VERSION/VERSION";
+          version = builtins.readFile VERSION/VERSION;
           src = ./.;
-          xBuildFiles = [
-            "./CLI.csproj"
-          ];
           nativeBuildInputs = [
-            pkg-config
+            dotnetCorePackages.sdk_7_0
+            msbuild
+            zlib
+            zlib.dev
+            openssl
           ];
+          buildInputs = [
+            dotnetCorePackages.runtime_7_0
+          ];
+          buildPhase = ''
+            runHook preBuild
+            dotnet restore
+            dotnet build -o . --no-restore
+            runHook postBuild
+          '';
+          installPhase = ''
+            runHook preInstall
+            mkdir -p $out/bin
+            mv CLI $out/bin/amcli
+            runHook postInstall
+          '';
         };
     });
   };
