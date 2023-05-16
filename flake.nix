@@ -24,6 +24,7 @@
           pname = "amcli";
           version = builtins.readFile VERSION/VERSION;
           src = ./.;
+          DOTNET_ROOT = "${dotnetCorePackages.sdk_7_0}";
           nativeBuildInputs = [
             dotnetCorePackages.sdk_7_0
             msbuild
@@ -36,8 +37,9 @@
           ];
           buildPhase = ''
             runHook preBuild
-            dotnet restore
-            dotnet build -o . --no-restore
+            mkdir packages
+            NUGET_PACKAGES=$(pwd)/packages dotnet restore
+            NUGET_PACKAGES=$(pwd)/packages dotnet build -o . --no-restore
             runHook postBuild
           '';
           installPhase = ''
