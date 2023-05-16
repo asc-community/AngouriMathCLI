@@ -20,34 +20,20 @@
 
     packages = nixpkgs.lib.genAttrs systems (arch: with nixpkgs.legacyPackages.${arch}; {
       default = 
-        stdenv.mkDerivation {
+        buildDotnetModule {
           pname = "amcli";
           version = builtins.readFile VERSION/VERSION;
           src = ./.;
-          DOTNET_ROOT = "${dotnetCorePackages.sdk_7_0}";
-          nativeBuildInputs = [
-            dotnetCorePackages.sdk_7_0
-            msbuild
-            zlib
-            zlib.dev
-            openssl
-          ];
-          buildInputs = [
-            dotnetCorePackages.runtime_7_0
-          ];
-          buildPhase = ''
-            runHook preBuild
-            mkdir packages
-            NUGET_PACKAGES=$(pwd)/packages dotnet restore
-            NUGET_PACKAGES=$(pwd)/packages dotnet build -o . --no-restore
-            runHook postBuild
+          nugetDeps = ./deps.nix;
+          dotnet-sdk = dotnetCorePackages.sdk_7_0;
+          dotnet-runtime = dotnetCorePackages.runtime_7_0;
+          projectFile = "./amcli.csproj";
+          preConfigure = ''
+            mv CLI.csproj amcli.csproj
           '';
-          installPhase = ''
-            runHook preInstall
-            mkdir -p $out/bin
-            mv CLI $out/bin/amcli
-            runHook postInstall
-          '';
+        };
+        meta = {
+          mainProgram = "amcli";
         };
     });
   };
