@@ -6,18 +6,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 
-    <SelfContained>true</SelfContained>
-    <PublishAot>true</PublishAot>
-    <PublishTrimmed>true</PublishTrimmed>
-    <TrimMode>full</TrimMode>
-    <IlcInvariantGlobalization>true</IlcInvariantGlobalization>
-    <IlcOptimizationPreference>Speed</IlcOptimizationPreference>
-    <IlcDisableReflection>false</IlcDisableReflection>
-    <StripSymbols>true</StripSymbols>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AngouriMath" Version="10.0.0-master-1664389750-0b77b8d" />
+    <PackageReference Include="AngouriMath" Version="1.4-preview.3" />
     <Compile Remove="**/publishing/**" />
   </ItemGroup>
 
