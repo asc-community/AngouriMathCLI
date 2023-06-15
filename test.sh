@@ -1,4 +1,3 @@
-#!/bin/bash
 ftest () {
     if [[ "$2" == "$3" ]]; then
         printf "#$1 OK\n"

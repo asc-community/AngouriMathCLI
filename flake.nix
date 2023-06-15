@@ -31,9 +31,6 @@
           dotnet-sdk = dotnetCorePackages.sdk_7_0;
           dotnet-runtime = dotnetCorePackages.runtime_7_0;
           projectFile = "./amcli.csproj";
-          preConfigure = ''
-            mv CLI.csproj amcli.csproj
-          '';
           postInstall = ''
             installManPage amcli.1
           '';

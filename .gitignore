@@ -67,3 +67,4 @@ Sources/msbuild.binlog
 **/publish-output/**
 **/output/**
 **/deb-output/**
+result
