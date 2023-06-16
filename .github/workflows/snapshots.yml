@@ -2,24 +2,14 @@ name: 'Automatic snapshots'
 
 on:
   push:
-    branches:
-      - master
-    paths:
-      - 'VERSION/**'
+#    branches:
+#      - master
+#    paths:
+#      - 'VERSION/**'
 
 jobs:
-  build:
-    strategy:
-      matrix:
-        include:
-          - os: windows-latest
-            flag: win-x64
-          - os: ubuntu-latest
-            flag: linux-x64
-          - os: macos-latest
-            flag: osx-x64
-
-    runs-on: ${{ matrix.os }}
+  build-osx:
+    runs-on: macos-latest
 
     steps:
     - uses: actions/checkout@v2
@@ -27,54 +17,116 @@ jobs:
     - uses: actions/setup-dotnet@v1
       with:
         dotnet-version: '7.0.100'
-    
     - run: |
-        dotnet publish -r ${{ matrix.flag }} -c release -o ./publish-output -p:Version=$(cat ./VERSION/VERSION)
-
-    - if: ${{ matrix.os != 'windows-latest' }}
-      run: |
-        mv ./publish-output/CLI ./publish-output/amcli-${{ matrix.flag }} 
-
-    - if: ${{ matrix.os == 'windows-latest' }}
-      run: |
-        mv ./publish-output/CLI.exe ./publish-output/amcli-win-x64.exe
+        dotnet publish -r osx-x64 -c release -o ./publish-output -p:Version=$(cat ./VERSION/VERSION)
+        mv ./publish-output/CLI ./publish-output/amcli-osx-x64
 
     - uses: actions/upload-artifact@v3
-      if: ${{ matrix.os == 'windows-latest' }}
       with:
-        name: amcli-win-x64
-        path: ./publish-output/amcli-${{ matrix.flag }}.exe
+        name: amcli-osx-x64
+        path: ./publish-output/amcli-osx-x64
 
-    - uses: actions/upload-artifact@v3
-      if: ${{ matrix.os != 'windows-latest' }}
-      with:
-        name: amcli-${{ matrix.flag }}
-        path: ./publish-output/amcli-${{ matrix.flag }}
-
-  release:
-    needs: build
+  build-linux:
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
-    - uses: actions/download-artifact@v3
+
+    - uses: actions/setup-dotnet@v1
       with:
-        name: amcli-win-x64
-    - uses: actions/download-artifact@v3
+        dotnet-version: '7.0.100'
+
+    - name: 'Install packages'
+      run: |
+        sudo apt install gcc-multilib -y
+        sudo apt install libc-dev -y
+        sudo apt install binutils-aarch64-linux-gnu -y
+        # dotnet nuget add source https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet8/nuget/v3/index.json
+        # dotnet add package Microsoft.DotNet.ILCompiler --prerelease
+        # dotnet add package runtime.linux-x64.Microsoft.DotNet.ILCompiler --prerelease
+
+    - name: 'Build'
+      run: |
+        dotnet publish -r linux-x64 -c release -o ./publish-output-x64 -p:Version=$(cat ./VERSION/VERSION)
+        dotnet publish -r linux-arm64 -c release -o ./publish-output-arm64 -p:Version=$(cat ./VERSION/VERSION)
+        mkdir publish-output
+        mv ./publish-output-x64/CLI ./publish-output/amcli-linux-x64 
+        mv ./publish-output-arm64/CLI ./publish-output/amcli-linux-arm64 
+
+    - uses: actions/upload-artifact@v3
       with:
         name: amcli-linux-x64
-    - uses: actions/download-artifact@v3
-      with:
-        name: amcli-osx-x64
+        path: ./publish-output/amcli-linux-x64
 
+    - uses: actions/upload-artifact@v3
+      with:
+        name: amcli-linux-arm64
+        path: ./publish-output/amcli-linux-arm64
+
+  build-win:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '7.0.100'
+ 
     - run: |
-        version=$(cat ./VERSION/VERSION)
-        echo ${{ secrets.CLI_ACCESS_TOKEN }} > token.txt
-        gh auth login --with-token < token.txt
-        gh release create v$version \
-        ./amcli-win-x64.exe \
-        ./amcli-linux-x64 \
-        ./amcli-osx-x64 \
-        -R asc-community/AngouriMathCLI \
-        -t 'AngouriMath CLI' \
-        -n 'Expant assets and find the binary for you'
+        dotnet publish -r win-x64 -c release -o ./publish-output-x64 -p:Version=$(cat ./VERSION/VERSION)
+        dotnet publish -r win-arm64 -c release -o ./publish-output-arm64 -p:Version=$(cat ./VERSION/VERSION)
+        mkdir publish-output
+        mv ./publish-output-x64/CLI.exe ./publish-output/amcli-win-x64.exe
+        mv ./publish-output-arm64/CLI.exe ./publish-output/amcli-win-arm64.exe
+
+    - uses: actions/upload-artifact@v3
+      with:
+        name: amcli-win-x64
+        path: ./publish-output/amcli-win-x64.exe
+
+    - uses: actions/upload-artifact@v3
+      with:
+        name: amcli-win-arm64
+        path: ./publish-output/amcli-win-arm64.exe
+
+
+#  release:
+#    needs: build-osx, build-win, build-linux
+#    runs-on: ubuntu-latest
+#
+#    steps:
+#    - uses: actions/checkout@v2
+#    - uses: actions/download-artifact@v3
+#      with:
+#        name: amcli-win-x64
+#    - uses: actions/download-artifact@v3
+#      with:
+#        name: amcli-linux-x64
+#    - uses: actions/download-artifact@v3
+#      with:
+#        name: amcli-osx-x64
+#    - uses: actions/download-artifact@v3
+#      with:
+#        name: amcli-win-arm64
+#    - uses: actions/download-artifact@v3
+#      with:
+#        name: amcli-linux-arm64
+#    - uses: actions/download-artifact@v3
+#      with:
+#        name: amcli-osx-arm64
+#
+#    - run: |
+#        version=$(cat ./VERSION/VERSION)
+#        echo ${{ secrets.CLI_ACCESS_TOKEN }} > token.txt
+#        gh auth login --with-token < token.txt
+#        gh release create v$version \
+#        ./amcli-win-x64.exe \
+#        ./amcli-linux-x64 \
+#        ./amcli-osx-x64 \
+#        ./amcli-win-arm64.exe \
+#        ./amcli-linux-arm64 \
+#        ./amcli-osx-arm64 \
+#        -R asc-community/AngouriMathCLI \
+#        -t 'AngouriMath CLI' \
+#        -n 'Expant assets and find the binary for you'
