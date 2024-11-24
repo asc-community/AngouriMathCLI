@@ -34,9 +34,12 @@
           postInstall = ''
             installManPage amcli.1
           '';
-        };
-        meta = {
-          mainProgram = "amcli";
+          meta = {
+            description = "CLI interface to AngouriMath symbolic algebra library";
+            licenses = pkgs.lib.licenses.gpl3;
+            homepage = "https://am.angouri.org";
+            mainProgram = "amcli";
+          };
         };
     });
   };
