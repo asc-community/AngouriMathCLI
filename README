@@ -1,1 +1,12 @@
-amcli.1
+amcli lives in asc-community/AngouriMath now, as part of the AngouriMath Terminal, and this
+repository is archived.
+
+    dotnet tool install --global AngouriMath.Terminal
+
+installs it, and amcli runs the terminal, or with a command answers once and exits: eval, simp,
+fsimp, diff, solve, sub, latex and info, with the same argument order as here and the same
+reading of stdin. See https://github.com/asc-community/AngouriMath/tree/master/Sources/Terminal
+
+This repository's open issues moved to asc-community/AngouriMath (#1658, #1659, #1660), and its
+info command is in amcli (asc-community/AngouriMath#1661). The man page this README used to show
+is amcli.1.
